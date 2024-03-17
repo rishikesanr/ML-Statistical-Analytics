@@ -1,5 +1,5 @@
 # Determining Treatment Effects 
 
-## Some of the projects that were done to understand the causal effects 
+## Projects that were done to understand the causal effects in various systems
 
-#### 1. Ozempic Effectiveness 
+#### 1. Ozempic Effectiveness (Understanding the casual effects of Ozempic on Hypertensive or Obese patients in reducing Obesity)

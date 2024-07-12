@@ -4,3 +4,7 @@
 
 #### 1. Ozempic Effectiveness (Understanding the casual effects of Ozempic on Hypertensive or Obese patients in reducing Obesity)
 
+# Kaggle Competitions
+
+#### 1. Health Insurance Cross Sell Prediction 
+

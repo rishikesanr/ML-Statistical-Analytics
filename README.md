@@ -6,5 +6,5 @@
 
 # Kaggle Competitions
 
-#### 1. Health Insurance Cross Sell Prediction 
+#### - Health Insurance Cross Sell Prediction 
 

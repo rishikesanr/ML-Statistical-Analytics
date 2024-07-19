@@ -1,0 +1,158 @@
+---
+title: "WTP Boostrap"
+author: "Rishi"
+date: "01/30/2024"
+output: html_document
+---
+
+# Initialize the libraries
+
+```{r}
+
+library(readxl)
+library(ggplot2)
+setwd('~/Documents/MSBA/Subjects/Winter/Advanced Statistics/Homework /Homework 2/')
+
+```
+
+# Read the data file
+
+```{r}
+
+# Read the design matrix
+design_matrix <- readxl::read_excel("Preferences_Rishi_1.0.xlsx")
+View(design_matrix)
+```
+
+# Run linear regression for conjoint analysis to compute pathworths
+
+```{r}
+
+# Initial conjoint model
+conjoint_model <- lm(rank ~ . - `Profile Nos` - `Profile Specs` - category - score, data = design_matrix)
+initial_summary <- summary(conjoint_model)
+initial_partworths <- coef(conjoint_model)
+
+```
+
+# Calculate WTP for computed pathworths
+
+```{r}
+
+# Calculate price per utility
+price_savings <- 2500 - 2000
+price_partworth <- abs(initial_partworths[6])
+price_per_utility <- price_savings / price_partworth
+
+# Initial WTP calculations
+initial_WTP <- abs(initial_partworths[2:6]) * price_per_utility
+
+```
+
+# Set the resampling limit and initialise the matrix for both Residual Bootstrap and Data bBootstrap
+
+```{r}
+
+# Bootstrap settings
+bb <- 1000
+n <- nrow(design_matrix)
+
+# Initialize matrices for bootstrap results
+bootstrap_WTPs_resid <- matrix(NA, nrow = bb, ncol = length(initial_WTP))
+bootstrap_WTPs_data <- matrix(NA, nrow = bb, ncol = length(initial_WTP))
+
+# Residuals for residual bootstrap
+residuals <- conjoint_model$residuals
+fitted_values <- conjoint_model$fitted.values
+
+```
+
+# Compute Residual Bootstrap 1000 times to get 95% CI for WTPs
+
+```{r}
+
+# Run the loop 1000 times
+for(i in 1:bb) {
+  # Residual Bootstrap
+  new_rank_resid <- fitted_values + sample(residuals, n, replace = TRUE)
+  model_resid <- lm(new_rank_resid ~ . - `Profile Nos` - `Profile Specs` - category - score, data = design_matrix)
+  partworths_resid <- coef(model_resid)
+  bootstrap_WTPs_resid[i, ] <- abs(partworths_resid[2:6]) * price_per_utility
+  
+  # Data Bootstrap
+  sample_indices <- sample(1:n, n, replace = TRUE)
+  bootstrap_sample <- design_matrix[sample_indices, ]
+  model_data <- lm(rank ~ . - `Profile Nos` - `Profile Specs` - category - score, data = bootstrap_sample)
+  partworths_data <- coef(model_data)
+  bootstrap_WTPs_data[i, ] <- abs(partworths_data[2:6]) * price_per_utility
+}
+
+# Compute 95% CI for WTPs from both approaches
+WTP_CI_resid_lower <- apply(bootstrap_WTPs_resid, 2, function(x) quantile(x, probs = 0.025, na.rm = TRUE))
+WTP_CI_resid_upper <- apply(bootstrap_WTPs_resid, 2, function(x) quantile(x, probs = 0.975, na.rm = TRUE))
+WTP_CI_data_lower <- apply(bootstrap_WTPs_data, 2, function(x) quantile(x, probs = 0.025, na.rm = TRUE))
+WTP_CI_data_upper <- apply(bootstrap_WTPs_data, 2, function(x) quantile(x, probs = 0.975, na.rm = TRUE))
+WTP_resid_mean <- apply(bootstrap_WTPs_resid,2, function(x) mean(x))
+WTP_data_mean <- apply(bootstrap_WTPs_data,2, function(x) mean(x))
+
+# Combine lower and upper CIs
+WTP_CI_resid <- rbind(WTP_CI_resid_lower, WTP_CI_resid_upper)
+WTP_CI_data <- rbind(WTP_CI_data_lower, WTP_CI_data_upper)
+
+```
+
+# Display the computed CIs
+
+```{r}
+
+# Convert the results in a dataframe for better readability
+WTP_CI_resid_df <- data.frame(
+  Attribute = names(initial_WTP),
+  Lower_CI_Residual = WTP_CI_resid[1, ],
+  Upper_CI_Residual = WTP_CI_resid[2, ])
+
+WTP_CI_data_df <- data.frame(
+  Attribute = names(initial_WTP),
+  Lower_CI_Data = WTP_CI_data[1, ],
+  Upper_CI_Data = WTP_CI_data[2, ])
+
+WTP_CI_resid_df$Mean <- WTP_resid_mean
+WTP_CI_data_df$Mean <- WTP_data_mean
+
+# Print results using cat for clearer, more formatted output
+cat("Residual Bootstrap WTP Confidence Intervals (Lower, Upper):\n")
+print(WTP_CI_resid_df, row.names = FALSE)
+cat("\nData Bootstrap WTP Confidence Intervals (Lower, Upper):\n")
+print(WTP_CI_data_df, row.names = FALSE)
+
+```
+
+# Plotting the CIs for better understanding
+
+```{r}
+
+# Add a method column to each data frame
+WTP_CI_resid_df$Method <- "Residual"
+WTP_CI_data_df$Method <- "Data"
+
+# Match column names 
+colnames(WTP_CI_resid_df) <- colnames(WTP_CI_data_df) <- c("Attribute", "Lower_CI", "Upper_CI","Mean" , "Method")
+
+# Combine the data frames
+WTP_CI_combined_df <- rbind(WTP_CI_resid_df, WTP_CI_data_df)
+
+# Plotting
+ggplot(WTP_CI_combined_df, aes(x = Attribute, y = Mean, ymin = Lower_CI, ymax = Upper_CI, color = Method)) +
+  geom_pointrange() +
+  theme_minimal() +
+  labs(title = "Bootstrap Confidence Intervals for WTP Estimates",
+       x = "Attribute",
+       y = "WTP Estimate (Mean of CI)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI), width = 0.2) +
+  scale_color_manual(values = c("Residual" = "blue", "Data" = "red")) +
+  facet_wrap(~Method, scales = "free_y")
+
+```
+
+# THE END

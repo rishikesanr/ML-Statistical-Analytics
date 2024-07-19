@@ -9,6 +9,9 @@ Developed and analyzed Venmo user social networks, identifying friends, calculat
 #### Forecasting Weather Time Series 
 Forecasted weather time series using the Holt-Winters method, achieving a 95% confidence interval accuracy over 26 weeks. Identified the optimal model for capturing trend and seasonality, and making reliable predictions.
 
+#### Classification
+Developed a logistic regression model to classify breast cancer, achieving a mean accuracy of 94.9%. Using FDR to reduce false discoveries, key interaction terms significantly improved the model, explaining 98.2% of the variability in diagnosis.
+
 
 # Kaggle Competitions
 

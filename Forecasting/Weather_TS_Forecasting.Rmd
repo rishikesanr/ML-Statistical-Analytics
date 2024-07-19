@@ -1,0 +1,149 @@
+---
+title: "Weather Time Series Forecasting"
+author: "Rishi"
+date: "18/01/2024"
+output: html_document
+---
+
+# Initialize the libraries
+
+```{r}
+
+rm(list = ls(all = TRUE)) #clear Data
+
+#install.packages(c("fpp2", "forecast", "TTR"), dependencies = TRUE, repos = "https://cloud.r-project.org")
+library(readxl)
+
+```
+
+# Question 1
+
+Select one time series from Data_week.csv
+
+```{r}
+
+# Read and view the Data file
+Data <- read_excel("data_week.xlsx")
+names(Data)
+head(Data)
+
+# Choose the attribute for time series analysis
+Sales <- Data[,3]/1000000		# In millions
+Sunlight <- Data[,14]				# Hours of sunlight
+
+# We decided to choose Sunlight for analysis, as it can actually have an real impact on the temperature in day, hence impacting sales.
+
+```
+
+# Question 2
+
+Try the four combinations of beta (on/off) and gamma (on/off)
+
+```{r}
+
+###############################################
+# Convert Sales & Sunlight as time series data:
+###############################################
+
+yy <- ts(Sales, frequency = 52,start = c(2015,1)) # Start date is set to 1st week of 2015, and feq of 52 weeks in a year
+plot.ts(yy) # Plotting the Sales pattern
+
+xx <- ts(Sunlight, frequency = 52, start = c(2015,1)) # Start date is set to 1st week of 2015, and feq of 52 weeks in a year
+plot.ts(xx) # Plotting the Sunlight pattern
+
+############################
+# Time Series Decomposition:
+############################
+
+# Breaking down the time series into Trend, Seasonal and Random noise
+Sales_d <- decompose(yy) 
+Sales.trend <- Sales_d$trend
+Sales.seasonal <- Sales_d$seasonal
+Sales.resid <- Sales_d$random
+Sales.season.adj <- yy - Sales.seasonal	 # Seasonally adjusted Sales
+plot.ts(cbind(yy,Sales.trend, Sales.seasonal, Sales.resid, Sales.season.adj))  # Plotting the decomposed and adjusted components of sales
+
+## Sunlight: Are Sunlight increasing?
+Sunlight_d <- decompose(xx) 
+trend <- Sunlight_d$trend
+seasonal <- Sunlight_d$seasonal
+random <- Sunlight_d$random
+season_adj <- xx - seasonal # Seasonally adjusted Sales
+plot.ts(cbind(xx,trend, seasonal, random))  # Plotting the decomposed and adjusted components of sunlight
+
+######################
+# Holt-Winters Filter:
+######################
+
+# First combination 
+out1 <- HoltWinters(xx, beta = FALSE, gamma = FALSE)
+out1					
+out1$fitted
+
+# Second combination
+out2 <- HoltWinters(xx, beta = TRUE, gamma = FALSE)
+out2
+out2$fitted
+
+# Third Combination
+out3 <- HoltWinters(xx, beta = FALSE, gamma = TRUE)
+out3
+out3$fitted
+
+# Fourth Combination
+out4 <- HoltWinters(xx, beta = TRUE, gamma = TRUE)
+out4
+out4$fitted
+
+```
+
+# Question 3
+
+Present the plots of Data series, trend, and seasonal components for each of the four combinations
+
+```{r}
+
+# Plotting of the four combination
+plot(out1)
+plot(out2)
+plot(out3)
+plot(out4)
+
+```
+
+# Question 4
+
+Make out-of-sample forecast for 26 weeks with confidence bands.
+
+```{r}
+
+##########################
+# Out of Sample Forecasts:
+##########################
+
+# We set the forecast frequency to 26, and CI bands of 1SD & 2SD = 68 & 95
+	
+out_for_1 <- forecast:::forecast.HoltWinters(out1, h = 26, level = c(68, 95))	 
+out_for_2 <- forecast:::forecast.HoltWinters(out2, h = 26, level = c(68, 95))
+out_for_3 <- forecast:::forecast.HoltWinters(out3, h = 26, level = c(68, 95))	
+out_for_4 <- forecast:::forecast.HoltWinters(out4, h = 26, level = c(68, 95))	
+
+# Plotting the forecasts
+plot(out_for_1)
+plot(out_for_2)
+plot(out_for_3)
+plot(out_for_4)
+
+```
+
+# Question 5
+
+Recommend one forecasting model -- give your justifcation.
+
+```{r}
+
+sprintf("After running the four models and plotting them against the true values, based on our analysis, we recommend the most suitable model with the Beta FALSE and Gamma TRUE combination for forecasting sunlight hours. This recommendation considers the model's ability to capture the data's seasonality, and we find that this is more accurate for the forecasts.")#  
+
+sprintf("One point to note is that the only way to measure the accuracy of a model is by seeing tomorrow’s data and comparing it with the forecast, and the difference corresponds to the error, which helps in better prediction for the next day. Since this is not possible at this point, we can just conclude based on the CI bandwidths, for which our third model seems to be the best fit")
+
+```

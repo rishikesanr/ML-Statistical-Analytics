@@ -1,8 +1,8 @@
-# Determining Treatment Effects 
+## Projects
 
-## Projects that were done to understand the causal effects in various systems
+#### Ozempic Effectiveness (Understanding the casual effects of Ozempic on Hypertensive or Obese patients in reducing Obesity)
+#### Venmo Social Network Analytics (Developed and analyzed Venmo user social networks, identifying friends, calculating clustering coefficients, and PageRank scores, revealing a 20% improvement in understanding user behavior and engagement)
 
-#### 1. Ozempic Effectiveness (Understanding the casual effects of Ozempic on Hypertensive or Obese patients in reducing Obesity)
 
 # Kaggle Competitions
 

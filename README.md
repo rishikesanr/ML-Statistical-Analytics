@@ -22,4 +22,4 @@ Applied residual and data bootstrap regression to estimate 95% CIs for willingne
 # Kaggle Competitions
 
 #### - Health Insurance Cross Sell Prediction 
-
+#### - Class Prediction (Monthly Challenge)
